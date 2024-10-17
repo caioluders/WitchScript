@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WitchScript Particle Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #spellInput { width: 100%; height: 100px; }
+        .collapsible { background-color: #f1f1f1; color: #444; cursor: pointer; padding: 18px; width: 100%; border: none; text-align: left; outline: none; font-size: 15px; }
+        .active, .collapsible:hover { background-color: #ccc; }
+        .content { padding: 0 18px; display: none; overflow: hidden; background-color: #f9f9f9; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>WitchScript Particle Visualization</h1>
+    
+    <button type="button" class="collapsible">📖 How to Create a Magic Circle (Click to Expand)</button>
+    <div class="content">
+        <h2>Creating Your Magic Circle</h2>
+        <p>In WitchScript, magic circles are created using ASCII art. Each circle consists of three main components:</p>
+        <ol>
+            <li><strong>The Ring:</strong> This is the outer boundary of your spell, typically drawn with characters like <code>. - / \ |</code></li>
+            <li><strong>The Sigil:</strong> This central symbol determines the elemental nature of your spell.</li>
+            <li><strong>The Signs:</strong> These modify the effect of your spell and are placed within the ring.</li>
+        </ol>
+
+        <h3>Sigils (Place one in the center of your circle)</h3>
+        <table>
+            <tr><th>Element</th><th>Sigil</th></tr>
+            <tr><td>Fire</td><td>/\</td></tr>
+            <tr><td>Water</td><td>~</td></tr>
+            <tr><td>Earth</td><td>#</td></tr>
+            <tr><td>Wind</td><td>@</td></tr>
+            <tr><td>Light</td><td>*</td></tr>
+        </table>
+
+        <h3>Signs (Place these around your sigil)</h3>
+        <table>
+            <tr><th>Effect</th><th>Sign</th></tr>
+            <tr><td>Amplify</td><td>+</td></tr>
+            <tr><td>Diminish</td><td>-</td></tr>
+            <tr><td>Spread</td><td>></td></tr>
+            <tr><td>Concentrate</td><td><</td></tr>
+            <tr><td>Sustain</td><td>=</td></tr>
+        </table>
+
+        <h3>Example Magic Circle</h3>
+        <pre>
+   .----.
+  /  +   \
+ |   /\   |
+  \  <   /
+   '----'
+        </pre>
+        <p>This circle represents an amplified (+) and concentrated (<) fire (/\) spell.</p>
+
+        <h3>Particle Behavior</h3>
+        <ul>
+            <li><strong>Fire:</strong> Particles rise upward</li>
+            <li><strong>Water:</strong> Particles fall downward</li>
+            <li><strong>Earth:</strong> Particles move slowly</li>
+            <li><strong>Wind:</strong> Particles rotate</li>
+            <li><strong>Light:</strong> Particles accelerate</li>
+        </ul>
+        <p>Signs modify these behaviors. Experiment with different combinations to see their effects!</p>
+    </div>
+
+    <div id="canvasContainer"></div>
+    <textarea id="spellInput">   .----.
+  /  +   \
+ |   /\   |
+  \      /
+   '----'</textarea>
+    <br>
+    <button onclick="visualizeSpell()">Visualize Spell</button>
+
+    <script>
+        let particles = [];
+        let sigil = 'unknown';
+        let signs = [];
+
+        function setup() {
+            createCanvas(400, 400).parent('canvasContainer');
+            background(220);
+            text('Click "Visualize Spell" to start', 10, 20);
+        }
+
+        function draw() {
+            background(220, 100);
+            
+            // Draw spell ring
+            noFill();
+            stroke(0);
+            ellipse(200, 200, 300, 300);
+            
+            // Update and display particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].display();
+                if (particles[i].isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Add new particles
+            if (frameCount % 5 === 0 && particles.length < 100) {
+                particles.push(new Particle(sigil, signs));
+            }
+
+            // Draw sigil and signs
+            drawSigil(sigil);
+            drawSigns(signs);
+        }
+
+        function visualizeSpell() {
+            var spellText = document.getElementById('spellInput').value;
+            var lines = spellText.split('\n');
+            
+            sigil = parseSigil(lines);
+            signs = parseSigns(lines);
+            
+            // Reset particles
+            particles = [];
+        }
+
+        function parseSigil(lines) {
+            var middleLine = lines[Math.floor(lines.length / 2)];
+            if (middleLine.includes('/\\')) return 'fire';
+            if (middleLine.includes('~')) return 'water';
+            if (middleLine.includes('#')) return 'earth';
+            if (middleLine.includes('@')) return 'wind';
+            if (middleLine.includes('*')) return 'light';
+            return 'unknown';
+        }
+
+        function drawSigil(sigil) {
+            push();
+            translate(200, 200);
+            noStroke();
+            fill(0);
+            textSize(40);
+            textAlign(CENTER, CENTER);
+            text(sigil === 'fire' ? '🔥' : 
+                 sigil === 'water' ? '💧' : 
+                 sigil === 'earth' ? '🌍' : 
+                 sigil === 'wind' ? '💨' : 
+                 sigil === 'light' ? '✨' : '?', 0, 0);
+            pop();
+        }
+
+        function parseSigns(lines) {
+            var signs = [];
+            lines.forEach(function(line) {
+                if (line.includes('+')) signs.push('amplify');
+                if (line.includes('-')) signs.push('diminish');
+                if (line.includes('>')) signs.push('spread');
+                if (line.includes('<')) signs.push('concentrate');
+                if (line.includes('=')) signs.push('sustain');
+            });
+            return signs;
+        }
+
+        function drawSigns(signs) {
+            push();
+            translate(200, 200);
+            noStroke();
+            fill(0);
+            textSize(20);
+            textAlign(CENTER, CENTER);
+            signs.forEach(function(sign, index) {
+                var angle = index * (TWO_PI / signs.length) - HALF_PI;
+                var x = cos(angle) * 100;
+                var y = sin(angle) * 100;
+                text(sign === 'amplify' ? '+' :
+                     sign === 'diminish' ? '-' :
+                     sign === 'spread' ? '>' :
+                     sign === 'concentrate' ? '<' :
+                     sign === 'sustain' ? '=' : '?', x, y);
+            });
+            pop();
+        }
+
+        class Particle {
+            constructor(sigil, signs) {
+                this.position = createVector(random(width), random(height));
+                this.velocity = p5.Vector.random2D().mult(random(1, 3));
+                this.acceleration = createVector(0, 0);
+                this.lifespan = 255;
+                this.sigil = sigil;
+                this.signs = signs;
+            }
+
+            update() {
+                this.velocity.add(this.acceleration);
+                this.position.add(this.velocity);
+                this.acceleration.mult(0);
+                this.lifespan -= 2;
+
+                // Apply sigil effects
+                switch (this.sigil) {
+                    case 'fire':
+                        this.velocity.y -= 0.05;
+                        break;
+                    case 'water':
+                        this.velocity.y += 0.05;
+                        break;
+                    case 'earth':
+                        this.velocity.mult(0.98);
+                        break;
+                    case 'wind':
+                        this.velocity.rotate(0.05);
+                        break;
+                    case 'light':
+                        this.velocity.mult(1.01);
+                        break;
+                }
+
+                // Apply sign effects
+                if (this.signs.includes('amplify')) this.velocity.mult(1.05);
+                if (this.signs.includes('diminish')) this.velocity.mult(0.95);
+                if (this.signs.includes('spread')) this.velocity.rotate(random(-0.1, 0.1));
+                if (this.signs.includes('concentrate')) {
+                    let center = createVector(width/2, height/2);
+                    this.acceleration = p5.Vector.sub(center, this.position).setMag(0.1);
+                }
+                if (this.signs.includes('sustain')) this.lifespan += 1;
+            }
+
+            display() {
+                stroke(0, this.lifespan);
+                fill(this.getColor());
+                ellipse(this.position.x, this.position.y, 8, 8);
+            }
+
+            isDead() {
+                return this.lifespan < 0;
+            }
+
+            getColor() {
+                switch (this.sigil) {
+                    case 'fire': return color(255, 0, 0, this.lifespan);
+                    case 'water': return color(0, 0, 255, this.lifespan);
+                    case 'earth': return color(0, 128, 0, this.lifespan);
+                    case 'wind': return color(200, 200, 200, this.lifespan);
+                    case 'light': return color(255, 255, 0, this.lifespan);
+                    default: return color(100, 100, 100, this.lifespan);
+                }
+            }
+        }
+
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
